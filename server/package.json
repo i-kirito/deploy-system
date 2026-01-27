@@ -1,0 +1,20 @@
+{
+  "name": "deploy-key-server",
+  "version": "1.0.0",
+  "description": "CLIProxyAPI 一键部署密钥管理服务器",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "qrcode": "^1.5.3",
+    "sql.js": "^1.10.3",
+    "uuid": "^9.0.1"
+  }
+}
