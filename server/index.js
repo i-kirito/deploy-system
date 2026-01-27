@@ -931,9 +931,7 @@ echo   Web:      http://127.0.0.1:8317/management.html
 echo   Password: admin123
 echo.
 echo ============================================
-echo.
-echo Opening CLIProxyAPI...
-start http://127.0.0.1:8317
+start http://127.0.0.1:8317/management.html
 ${totpSecret ? `
 echo.
 echo ============================================
