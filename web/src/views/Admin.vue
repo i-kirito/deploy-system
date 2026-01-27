@@ -554,7 +554,9 @@ async function batchAddAccounts() {
   const accounts = []
 
   for (const line of lines) {
-    const parts = line.split('|')
+    // 支持 | 和 --- 两种分隔符
+    const separator = line.includes('---') ? '---' : '|'
+    const parts = line.split(separator)
     if (parts.length >= 2) {
       accounts.push({
         email: parts[0].trim(),
