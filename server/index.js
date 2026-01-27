@@ -921,12 +921,6 @@ echo ============================================
 echo    CLIProxyAPI
 echo ============================================
 echo.
-echo   Address:  http://127.0.0.1:8317
-echo.
-echo ============================================
-echo    Management Panel
-echo ============================================
-echo.
 echo   Web:      http://127.0.0.1:8317/management.html
 echo   Password: admin123
 echo.
