@@ -925,6 +925,12 @@ powershell -ExecutionPolicy Bypass -File "totp.ps1" 2>nul
 ` : ''}
 echo.
 echo ============================================
+echo    CLIProxyAPI
+echo ============================================
+echo.
+echo   Address:  http://127.0.0.1:8317
+echo.
+echo ============================================
 echo    Management Panel
 echo ============================================
 echo.
@@ -933,8 +939,8 @@ echo   Password: admin123
 echo.
 echo ============================================
 echo.
-echo Opening management page...
-start http://127.0.0.1:8317/management.html
+echo Opening CLIProxyAPI...
+start http://127.0.0.1:8317
 
 echo.
 echo Press any key to exit...
