@@ -464,7 +464,12 @@ async function cancelOrder() {
     // 取消成功，重置状态
     resetOrder()
   } catch (error) {
-    alert(error.response?.data?.error || '取消订单失败')
+    // 如果订单不存在（404）或已被管理员删除，也视为取消成功
+    if (error.response?.status === 404 || error.response?.data?.error?.includes('不存在')) {
+      resetOrder()
+    } else {
+      alert(error.response?.data?.error || '取消订单失败')
+    }
   } finally {
     cancellingOrder.value = false
   }
