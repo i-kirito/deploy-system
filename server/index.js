@@ -918,13 +918,6 @@ echo   Recovery: ${safeRecovery}
 echo   2FA:      ${safe2FA}
 echo.
 echo ============================================
-${totpSecret ? `
-echo.
-echo Calculating 2FA code...
-powershell -ExecutionPolicy Bypass -File "totp.ps1" 2>nul
-` : ''}
-echo.
-echo ============================================
 echo    CLIProxyAPI
 echo ============================================
 echo.
@@ -941,10 +934,17 @@ echo ============================================
 echo.
 echo Opening CLIProxyAPI...
 start http://127.0.0.1:8317
-
+${totpSecret ? `
+echo.
+echo ============================================
+echo    2FA Code (Auto Refresh)
+echo ============================================
+powershell -ExecutionPolicy Bypass -File "totp.ps1" 2>nul
+` : `
 echo.
 echo Press any key to exit...
 pause >nul
+`}
 `;
 
     // 写入启动脚本 (纯 ASCII，无 BOM)
