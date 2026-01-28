@@ -162,9 +162,23 @@ example2@gmail.com|password2|recovery2@example.com|totp_secret2"
 
       <!-- 账号列表 - 卡片式布局 -->
       <div class="accounts-grid">
-        <div v-for="account in accounts" :key="account.id" class="account-card">
+        <div
+          v-for="(account, index) in accounts"
+          :key="account.id"
+          class="account-card"
+          :class="{ 'dragging': draggedIndex === index, 'drag-over': dragOverIndex === index }"
+          draggable="true"
+          @dragstart="handleDragStart($event, index)"
+          @dragend="handleDragEnd"
+          @dragover.prevent="handleDragOver($event, index)"
+          @dragleave="handleDragLeave"
+          @drop="handleDrop($event, index)"
+        >
           <div class="account-header">
-            <div class="account-id">#{{ account.id }}</div>
+            <div class="account-id">
+              <span class="drag-handle" title="拖动排序">⋮⋮</span>
+              #{{ index + 1 }}
+            </div>
             <span
               v-if="account.assigned_order_id === 'DISABLED'"
               class="status-badge status-disabled"
@@ -438,6 +452,8 @@ const passwordForm = ref({ oldPassword: '', newPassword: '', confirmPassword: ''
 const testAccount = ref({ email: '', password: '', recoveryEmail: '', totpSecret: '' })
 const testKeyLoading = ref(false)
 const generatedTestKey = ref(null)
+const draggedIndex = ref(null)
+const dragOverIndex = ref(null)
 const now = ref(Date.now()) // 用于触发倒计时更新
 let countdownTimer = null
 
@@ -633,6 +649,63 @@ async function toggleAccountStatus(id) {
   }
 }
 
+// 拖拽排序相关函数
+function handleDragStart(e, index) {
+  draggedIndex.value = index
+  e.dataTransfer.effectAllowed = 'move'
+  e.dataTransfer.setData('text/plain', index)
+}
+
+function handleDragEnd() {
+  draggedIndex.value = null
+  dragOverIndex.value = null
+}
+
+function handleDragOver(e, index) {
+  if (draggedIndex.value !== null && draggedIndex.value !== index) {
+    dragOverIndex.value = index
+  }
+}
+
+function handleDragLeave() {
+  dragOverIndex.value = null
+}
+
+async function handleDrop(e, targetIndex) {
+  e.preventDefault()
+  const sourceIndex = draggedIndex.value
+
+  if (sourceIndex === null || sourceIndex === targetIndex) {
+    draggedIndex.value = null
+    dragOverIndex.value = null
+    return
+  }
+
+  // 移动数组元素
+  const newAccounts = [...accounts.value]
+  const [movedItem] = newAccounts.splice(sourceIndex, 1)
+  newAccounts.splice(targetIndex, 0, movedItem)
+  accounts.value = newAccounts
+
+  draggedIndex.value = null
+  dragOverIndex.value = null
+
+  // 保存新排序到后端
+  try {
+    const orders = newAccounts.map((acc, idx) => ({
+      id: acc.id,
+      sort_order: idx
+    }))
+    await axios.post('/api/admin/accounts/reorder', { orders })
+    showToast('排序已保存')
+  } catch (e) {
+    console.error('保存排序失败:', e)
+    // 重新加载恢复原顺序
+    await loadAccounts()
+    showToast('保存排序失败')
+  }
+}
+
 function openEditModal(account) {
   editingAccount.value = { ...account }
 }
@@ -791,6 +864,21 @@ function copyTestKey() {
   padding: 16px;
   border: 1px solid var(--border);
   transition: all 0.3s ease;
+  cursor: grab;
+}
+
+.account-card:active {
+  cursor: grabbing;
+}
+
+.account-card.dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
+}
+
+.account-card.drag-over {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary);
 }
 
 .account-card:hover {
@@ -807,9 +895,28 @@ function copyTestKey() {
 }
 
 .account-id {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.8rem;
   color: var(--text-muted);
   font-weight: 600;
+}
+
+.drag-handle {
+  cursor: grab;
+  color: var(--text-muted);
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  user-select: none;
+}
+
+.drag-handle:hover {
+  opacity: 1;
+}
+
+.account-card:active .drag-handle {
+  cursor: grabbing;
 }
 
 .status-badge {

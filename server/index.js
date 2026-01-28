@@ -82,6 +82,12 @@ async function initDatabase() {
   try {
     db.run(`ALTER TABLE google_accounts ADD COLUMN assigned_order_id TEXT DEFAULT NULL`);
   } catch (e) { /* 字段已存在 */ }
+  // 新增：排序字段
+  try {
+    db.run(`ALTER TABLE google_accounts ADD COLUMN sort_order INTEGER DEFAULT 0`);
+  } catch (e) { /* 字段已存在 */ }
+  // 初始化排序值（如果为0则设置为id）
+  db.run(`UPDATE google_accounts SET sort_order = id WHERE sort_order = 0 OR sort_order IS NULL`);
 
   // 删除旧的 refresh_token 字段的依赖（如果存在）
   // 新结构不再需要 refresh_token，因为是完整的账号信息
@@ -643,9 +649,9 @@ app.post('/api/admin/accounts/batch', adminAuth, (req, res) => {
 
 app.get('/api/admin/accounts', adminAuth, (req, res) => {
   const accounts = queryAll(`
-    SELECT id, email, password, recovery_email, totp_secret, assigned_order_id, created_at
+    SELECT id, email, password, recovery_email, totp_secret, assigned_order_id, sort_order, created_at
     FROM google_accounts
-    ORDER BY id DESC
+    ORDER BY sort_order ASC, id ASC
   `);
   res.json(accounts);
 });
@@ -702,6 +708,24 @@ app.post('/api/admin/accounts/:id/toggle-status', adminAuth, (req, res) => {
   } else {
     runQuery('UPDATE google_accounts SET assigned_order_id = NULL WHERE id = ?', [parseInt(id)]);
     res.json({ success: true, status: 'available', message: '账号已标记为可用' });
+  }
+});
+
+// 更新账号排序
+app.post('/api/admin/accounts/reorder', adminAuth, (req, res) => {
+  const { orders } = req.body; // [{ id: 1, sort_order: 0 }, { id: 2, sort_order: 1 }, ...]
+
+  if (!Array.isArray(orders)) {
+    return res.status(400).json({ error: '参数格式错误' });
+  }
+
+  try {
+    for (const item of orders) {
+      runQuery('UPDATE google_accounts SET sort_order = ? WHERE id = ?', [item.sort_order, item.id]);
+    }
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: '更新排序失败' });
   }
 });
 
