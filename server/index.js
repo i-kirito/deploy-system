@@ -651,7 +651,7 @@ app.get('/api/admin/accounts', adminAuth, (req, res) => {
   const accounts = queryAll(`
     SELECT id, email, password, recovery_email, totp_secret, assigned_order_id, sort_order, created_at
     FROM google_accounts
-    ORDER BY sort_order ASC, id ASC
+    ORDER BY sort_order DESC, id DESC
   `);
   res.json(accounts);
 });
