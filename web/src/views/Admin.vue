@@ -692,9 +692,11 @@ async function handleDrop(e, targetIndex) {
 
   // 保存新排序到后端
   try {
+    // 由于后端使用 DESC 倒序，排在前面的需要更大的 sort_order 值
+    const total = newAccounts.length
     const orders = newAccounts.map((acc, idx) => ({
       id: acc.id,
-      sort_order: idx
+      sort_order: total - idx
     }))
     await axios.post('/api/admin/accounts/reorder', { orders })
     showToast('排序已保存')
