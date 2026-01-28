@@ -165,10 +165,28 @@ example2@gmail.com|password2|recovery2@example.com|totp_secret2"
         <div v-for="account in accounts" :key="account.id" class="account-card">
           <div class="account-header">
             <div class="account-id">#{{ account.id }}</div>
-            <span v-if="account.assigned_order_id" class="status-badge status-assigned">
+            <span
+              v-if="account.assigned_order_id === 'DISABLED'"
+              class="status-badge status-disabled"
+              @click="toggleAccountStatus(account.id)"
+              style="cursor: pointer;"
+              title="点击切换为可用"
+            >
+              <span class="status-dot"></span>已禁用
+            </span>
+            <span
+              v-else-if="account.assigned_order_id"
+              class="status-badge status-assigned"
+            >
               <span class="status-dot"></span>已分配
             </span>
-            <span v-else class="status-badge status-available">
+            <span
+              v-else
+              class="status-badge status-available"
+              @click="toggleAccountStatus(account.id)"
+              style="cursor: pointer;"
+              title="点击切换为不可用"
+            >
               <span class="status-dot"></span>可用
             </span>
           </div>
@@ -605,6 +623,16 @@ async function releaseAccount(id) {
   }
 }
 
+async function toggleAccountStatus(id) {
+  try {
+    const { data } = await axios.post(`/api/admin/accounts/${id}/toggle-status`)
+    await Promise.all([loadStats(), loadAccounts()])
+    showToast(data.message)
+  } catch (e) {
+    alert(e.response?.data?.error || '切换状态失败')
+  }
+}
+
 function openEditModal(account) {
   editingAccount.value = { ...account }
 }
@@ -855,6 +883,29 @@ function copyTestKey() {
 .status-assigned .status-dot {
   background: var(--text-muted);
   animation: none;
+}
+
+.status-disabled {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+  transition: all 0.2s ease;
+}
+
+.status-disabled:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+.status-disabled .status-dot {
+  background: var(--danger);
+  animation: none;
+}
+
+.status-available {
+  transition: all 0.2s ease;
+}
+
+.status-available:hover {
+  background: rgba(34, 197, 94, 0.25);
 }
 
 @keyframes pulse {

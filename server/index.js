@@ -684,6 +684,27 @@ app.post('/api/admin/accounts/:id/release', adminAuth, (req, res) => {
   res.json({ success: true, message: '账号已释放' });
 });
 
+// 切换账号可用状态（手动标记为可用/不可用）
+app.post('/api/admin/accounts/:id/toggle-status', adminAuth, (req, res) => {
+  const { id } = req.params;
+  const accounts = queryAll('SELECT assigned_order_id FROM google_accounts WHERE id = ?', [parseInt(id)]);
+
+  if (accounts.length === 0) {
+    return res.status(404).json({ error: '账号不存在' });
+  }
+
+  const account = accounts[0];
+  // 如果当前可用（assigned_order_id 为空），则标记为不可用（设置为 'DISABLED'）
+  // 如果当前不可用，则标记为可用（清空 assigned_order_id）
+  if (account.assigned_order_id === null || account.assigned_order_id === '') {
+    runQuery('UPDATE google_accounts SET assigned_order_id = ? WHERE id = ?', ['DISABLED', parseInt(id)]);
+    res.json({ success: true, status: 'disabled', message: '账号已标记为不可用' });
+  } else {
+    runQuery('UPDATE google_accounts SET assigned_order_id = NULL WHERE id = ?', [parseInt(id)]);
+    res.json({ success: true, status: 'available', message: '账号已标记为可用' });
+  }
+});
+
 // 删除订单
 app.delete('/api/admin/orders/:orderId', adminAuth, (req, res) => {
   const { orderId } = req.params;
